@@ -1,0 +1,100 @@
+/* ========================================
+   Responsive Breakpoints
+   ======================================== */
+
+/* Tablet: 768px and below */
+@media (max-width: 768px) {
+  :root {
+    --space-lg: 20px;
+    --space-xl: 28px;
+    --space-2xl: 36px;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .module-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-md);
+  }
+
+  .quiz-modal {
+    width: 95%;
+    padding: var(--space-lg);
+  }
+
+  .search-filter {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .search-filter__input {
+    width: 100%;
+  }
+
+  .filter-buttons {
+    flex-wrap: wrap;
+  }
+
+  .learning-path {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .learning-path svg {
+    min-width: 600px;
+  }
+}
+
+/* Mobile: 480px and below */
+@media (max-width: 480px) {
+  :root {
+    --space-lg: 16px;
+    --space-xl: 24px;
+    --space-2xl: 32px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .app-header {
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  .main-content {
+    padding: 0 var(--space-md) var(--space-xl);
+  }
+
+  .module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .module-card {
+    padding: var(--space-md);
+  }
+
+  .quiz-modal {
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .quiz-option {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+  }
+
+  .quiz-score__value {
+    font-size: 2.25rem;
+  }
+
+  .progress-bar-container {
+    padding: var(--space-sm) var(--space-md);
+  }
+}

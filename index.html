@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Literacy Toolkit — Applied Humanity Foundation</title>
+<meta name="description" content="Free, interactive learning modules for essential digital skills. An open-source project by Applied Humanity Foundation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #111118;
+  --bg-card: rgba(255,255,255,0.03);
+  --bg-card-hover: rgba(255,255,255,0.06);
+  --glass: rgba(255,255,255,0.05);
+  --glass-border: rgba(255,255,255,0.08);
+  --text-primary: #f0f0f5;
+  --text-secondary: #8888a0;
+  --text-muted: #55556a;
+  --accent-start: #2563eb;
+  --accent-end: #0ea5e9;
+  --accent-glow: rgba(37,99,235,0.25);
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; }
+/* ---- Canvas Background ---- */
+#particle-canvas {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+/* ---- Glow blobs ---- */
+.glow-blob {
+  position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.12;
+  pointer-events: none; z-index: 0;
+}
+.glow-blob.a { width: 600px; height: 600px; background: var(--accent-start); top: -200px; left: -100px; }
+.glow-blob.b { width: 500px; height: 500px; background: var(--accent-end); bottom: -150px; right: -100px; }
+/* ---- Layout ---- */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+section { padding: 100px 0; }
+/* ---- Navigation ---- */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10,10,15,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  transition: var(--transition);
+}
+nav .container { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.nav-logo {
+  font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.nav-links { display: flex; gap: 32px; list-style: none; }
+.nav-links a {
+  font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);
+  transition: var(--transition); position: relative;
+}
+.nav-links a:hover { color: var(--text-primary); }
+.nav-links a::after {
+  content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+  transition: width 0.3s ease;
+}
+.nav-links a:hover::after { width: 100%; }
+.nav-toggle { display: none; background: none; color: var(--text-primary); font-size: 1.5rem; }
+/* ---- Hero ---- */
+#hero { padding: 160px 0 80px; text-align: center; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 20px; border-radius: 100px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 32px;
+}
+.hero-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse-dot 2s infinite; }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.hero-title {
+  font-size: clamp(2.8rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.1;
+  letter-spacing: -2px; margin-bottom: 24px;
+}
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end), #a78bfa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+}
+@keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+.hero-desc {
+  font-size: 1.2rem; color: var(--text-secondary); max-width: 600px;
+  margin: 0 auto 40px; line-height: 1.7;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 16px 36px; border-radius: 100px; font-size: 1rem; font-weight: 600;
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  color: #fff; transition: var(--transition);
+  box-shadow: 0 4px 24px var(--accent-glow);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px var(--accent-glow); }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 14px 32px; border-radius: 100px; font-size: 0.95rem; font-weight: 500;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  color: var(--text-primary); transition: var(--transition); margin-left: 16px;
+}
+.btn-secondary:hover { background: var(--bg-card-hover); }
+/* ---- Stats ---- */
+.stats-bar {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+  background: var(--glass-border); border-radius: var(--radius); overflow: hidden;
+  margin-top: 80px;
+}
+.stat-item {
+  background: var(--bg-secondary); padding: 28px 20px; text-align: center;
+  transition: var(--transition);
+}
+.stat-item:hover { background: var(--bg-card-hover); }
+.stat-number {
+  font-size: 1.6rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; }
+/* ---- Progress Dashboard ---- */
+.progress-dashboard {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 24px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 32px; backdrop-filter: blur(10px);
+}
+.progress-info h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+.progress-info span { font-size: 0.9rem; color: var(--text-secondary); }
+.progress-bar-wrap {
+  flex: 1; max-width: 400px; height: 10px; background: rgba(255,255,255,0.06);
+  border-radius: 100px; margin-left: 40px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 100px; transition: width 0.6s ease;
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+}
+/* ---- Search ---- */
+.search-wrap {
+  display: flex; gap: 12px; margin-bottom: 40px; flex-wrap: wrap;
+  align-items: center;
+}
+.search-input {
+  flex: 1; min-width: 200px; padding: 14px 20px 14px 48px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm); color: var(--text-primary);
+  font-size: 0.95rem; outline: none; transition: var(--transition);
+}
+.search-input:focus { border-color: var(--accent-start); box-shadow: 0 0 0 3px var(--accent-glow); }
+.search-container { position: relative; flex: 1; min-width: 200px; }
+.search-icon {
+  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted); font-size: 1.1rem; pointer-events: none;
+}
+.filter-btn {
+  padding: 14px 24px; background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.9rem;
+  font-weight: 500; transition: var(--transition);
+}
+.filter-btn:hover, .filter-btn.active {
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  color: #fff; border-color: transparent;
+}
+/* ---- Module Cards ---- */
+.modules-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+}
+.module-card {
+  background: var(--bg-card); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 32px; cursor: pointer;
+  transition: var(--transition); position: relative; overflow: hidden;
+}
+.module-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.module-card:hover { background: var(--bg-card-hover); transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+.module-card:hover::before { opacity: 1; }
+.module-card.completed { border-color: rgba(34,197,94,0.3); }
+.module-card.completed::before { background: var(--green); opacity: 1; }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+.card-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: linear-gradient(135deg, rgba(37,99,235,0.15), rgba(14,165,233,0.15));
+  display: flex; align-items: center; justify-content: center; font-size: 1.6rem;
+}
+.card-badge {
+  padding: 4px 14px; border-radius: 100px; font-size: 0.75rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.badge-beginner { background: rgba(34,197,94,0.12); color: var(--green); }
+.badge-intermediate { background: rgba(245,158,11,0.12); color: var(--amber); }
+.card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; }
+.card-desc { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; }
+.card-progress { margin-bottom: 16px; }
+.card-progress-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.card-progress-label { font-size: 0.8rem; color: var(--text-muted); }
+.card-progress-bar {
+  width: 100%; height: 6px; background: rgba(255,255,255,0.06);
+  border-radius: 100px; overflow: hidden;
+}
+.card-progress-fill {
+  height: 100%; border-radius: 100px; transition: width 0.4s ease;
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+}
+.module-card.completed .card-progress-fill { background: var(--green); }
+.card-btn {
+  width: 100%; padding: 12px; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(37,99,235,0.12), rgba(14,165,233,0.12));
+  color: var(--accent-end); font-size: 0.9rem; font-weight: 600;
+  transition: var(--transition); border: 1px solid transparent;
+}
+.card-btn:hover {
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  color: #fff;
+}
+.module-card.completed .card-btn {
+  background: rgba(34,197,94,0.1); color: var(--green);
+}
+/* ---- Section headers ---- */
+.section-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 0.85rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--accent-end); margin-bottom: 16px;
+}
+.section-title {
+  font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 800;
+  letter-spacing: -1px; margin-bottom: 16px;
+}
+.section-desc { font-size: 1.05rem; color: var(--text-secondary); max-width: 600px; line-height: 1.7; }
+.section-header { margin-bottom: 60px; }
+/* ---- Learning Path ---- */
+.path-timeline { position: relative; padding: 20px 0; }
+.path-line {
+  position: absolute; left: 28px; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(to bottom, var(--accent-start), var(--accent-end), var(--accent-start));
+  border-radius: 3px;
+}
+.path-step {
+  display: flex; align-items: flex-start; gap: 24px; margin-bottom: 40px;
+  position: relative; opacity: 0; transform: translateX(-20px);
+}
+.path-step.visible { opacity: 1; transform: translateX(0); transition: all 0.5s ease; }
+.path-dot {
+  width: 56px; height: 56px; min-width: 56px; border-radius: 50%;
+  background: var(--bg-secondary); border: 3px solid var(--accent-start);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; z-index: 1;
+}
+.path-dot.done { background: var(--green); border-color: var(--green); }
+.path-content {
+  background: var(--bg-card); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 24px; flex: 1;
+}
+.path-content h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+.path-content p { font-size: 0.9rem; color: var(--text-secondary); }
+/* ---- Features Grid ---- */
+.features-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;
+}
+.feature-card {
+  background: var(--bg-card); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 32px; transition: var(--transition);
+}
+.feature-card:hover { background: var(--bg-card-hover); transform: translateY(-2px); }
+.feature-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(37,99,235,0.12), rgba(14,165,233,0.12));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; margin-bottom: 20px;
+}
+.feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+.feature-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+/* ---- About ---- */
+.about-content {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+}
+.about-text p { color: var(--text-secondary); margin-bottom: 16px; line-height: 1.7; font-size: 1rem; }
+.about-card {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 40px; backdrop-filter: blur(12px);
+  text-align: center;
+}
+.about-card .logo-large { font-size: 3rem; margin-bottom: 16px; }
+.about-card h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 10px; }
+.about-card p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px; }
+.about-link {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--accent-end); font-weight: 600; font-size: 0.95rem;
+}
+/* ---- Footer ---- */
+footer {
+  border-top: 1px solid var(--glass-border); padding: 40px 0;
+  text-align: center;
+}
+footer p { color: var(--text-muted); font-size: 0.9rem; }
+footer a { color: var(--text-secondary); transition: var(--transition); }
+footer a:hover { color: var(--accent-end); }
+.footer-links { display: flex; justify-content: center; gap: 32px; margin-top: 16px; }
+/* ---- Modal ---- */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  justify-content: center; align-items: center; padding: 24px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--bg-secondary); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); max-width: 720px; width: 100%;
+  max-height: 85vh; overflow-y: auto; position: relative;
+}
+.modal-header {
+  padding: 28px 32px; border-bottom: 1px solid var(--glass-border);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: var(--bg-secondary); z-index: 1;
+}
+.modal-header h2 { font-size: 1.3rem; font-weight: 700; }
+.modal-close {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--glass);
+  color: var(--text-secondary); font-size: 1.2rem; display: flex;
+  align-items: center; justify-content: center; transition: var(--transition);
+}
+.modal-close:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.modal-body { padding: 32px; }
+.modal-body h3 { font-size: 1.1rem; font-weight: 700; margin: 24px 0 12px; color: var(--accent-end); }
+.modal-body h3:first-child { margin-top: 0; }
+.modal-body p { color: var(--text-secondary); line-height: 1.7; margin-bottom: 12px; font-size: 0.95rem; }
+.quiz-section { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--glass-border); }
+.quiz-section h3 { color: var(--text-primary); font-size: 1.15rem; margin-bottom: 20px; }
+.quiz-question { margin-bottom: 28px; }
+.quiz-question p { color: var(--text-primary); font-weight: 600; margin-bottom: 12px; font-size: 0.95rem; }
+.quiz-option {
+  display: block; width: 100%; text-align: left; padding: 14px 18px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm); color: var(--text-secondary);
+  font-size: 0.9rem; margin-bottom: 8px; transition: var(--transition);
+}
+.quiz-option:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.quiz-option.selected { border-color: var(--accent-start); background: rgba(37,99,235,0.1); color: var(--text-primary); }
+.quiz-option.correct { border-color: var(--green); background: rgba(34,197,94,0.1); color: var(--green); }
+.quiz-option.wrong { border-color: #ef4444; background: rgba(239,68,68,0.1); color: #ef4444; }
+.quiz-actions { display: flex; gap: 12px; margin-top: 24px; }
+.quiz-result {
+  padding: 16px 20px; border-radius: var(--radius-sm); margin-top: 16px;
+  font-size: 0.95rem; font-weight: 600;
+}
+.quiz-result.pass { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+.quiz-result.fail { background: rgba(245,158,11,0.1); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+/* ---- Reveal animation ---- */
+.reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .nav-links { display: none; position: absolute; top: 64px; left: 0; right: 0;
+    flex-direction: column; background: rgba(10,10,15,0.95); padding: 20px; gap: 16px;
+    border-bottom: 1px solid var(--glass-border); backdrop-filter: blur(20px); }
+  .nav-links.open { display: flex; }
+  .nav-toggle { display: block; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .modules-grid { grid-template-columns: 1fr; }
+  .features-grid { grid-template-columns: 1fr; }
+  .about-content { grid-template-columns: 1fr; gap: 32px; }
+  .progress-dashboard { flex-direction: column; gap: 16px; text-align: center; }
+  .progress-bar-wrap { margin-left: 0; max-width: 100%; width: 100%; }
+  .search-wrap { flex-direction: column; }
+  .search-container { width: 100%; }
+  .hero-title { letter-spacing: -1px; }
+  .btn-secondary { margin-left: 0; margin-top: 12px; }
+  .path-line { left: 27px; }
+  section { padding: 60px 0; }
+}
+@media (max-width: 480px) {
+  .stats-bar { grid-template-columns: 1fr 1fr; }
+  .modal-body { padding: 20px; }
+  .modal-header { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+<div class="glow-blob a"></div>
+<div class="glow-blob b"></div>
+
+<!-- Navigation -->
+<nav>
+  <div class="container">
+    <a href="#" class="nav-logo">DLT</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#modules">Modules</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="https://github.com/applied-humanity-foundation/digital-literacy-toolkit" target="_blank">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-badge"><span class="dot"></span> Open Source &middot; Free Forever</div>
+    <h1 class="hero-title">
+      <span class="gradient-text">Digital Literacy</span><br>for Everyone
+    </h1>
+    <p class="hero-desc">
+      Six interactive learning modules covering essential digital skills — from computer basics to AI fundamentals. No sign-up required. Start learning immediately.
+    </p>
+    <a href="#modules" class="btn-primary">&#9654; Start Learning</a>
+    <a href="https://github.com/applied-humanity-foundation/digital-literacy-toolkit" target="_blank" class="btn-secondary">&#9733; Star on GitHub</a>
+
+    <div class="stats-bar reveal">
+      <div class="stat-item"><div class="stat-number">6</div><div class="stat-label">Learning Modules</div></div>
+      <div class="stat-item"><div class="stat-number">100%</div><div class="stat-label">Free &amp; Open Source</div></div>
+      <div class="stat-item"><div class="stat-number">2</div><div class="stat-label">Languages</div></div>
+      <div class="stat-item"><div class="stat-number">CC BY</div><div class="stat-label">4.0 License</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Modules -->
+<section id="modules">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">&#128218; Curriculum</div>
+      <h2 class="section-title">Learning Modules</h2>
+      <p class="section-desc">Work through each module at your own pace. Track your progress and pick up right where you left off.</p>
+    </div>
+
+    <!-- Progress Dashboard -->
+    <div class="progress-dashboard reveal" id="progressDashboard">
+      <div class="progress-info">
+        <h3>Your Progress</h3>
+        <span id="progressText">0 of 6 modules completed</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="overallProgress" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="search-wrap reveal">
+      <div class="search-container">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search modules...">
+      </div>
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="beginner">Beginner</button>
+      <button class="filter-btn" data-filter="intermediate">Intermediate</button>
+    </div>
+
+    <div class="modules-grid" id="modulesGrid"></div>
+  </div>
+</section>
+
+<!-- Learning Path -->
+<section id="path">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">&#128736;&#65039; Roadmap</div>
+      <h2 class="section-title">Recommended Learning Path</h2>
+      <p class="section-desc">Follow this suggested order for the most effective learning experience.</p>
+    </div>
+    <div class="path-timeline" id="pathTimeline"></div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">&#10024; Why This Toolkit</div>
+      <h2 class="section-title">Built for Learners</h2>
+      <p class="section-desc">Designed with accessibility, simplicity, and effectiveness in mind.</p>
+    </div>
+    <div class="features-grid" id="featuresGrid"></div>
+  </div>
+</section>
+
+<!-- About -->
+<section id="about">
+  <div class="container">
+    <div class="about-content reveal">
+      <div>
+        <div class="section-label">&#127758; Our Mission</div>
+        <h2 class="section-title">About This Project</h2>
+        <p class="about-text">
+          <p>The Digital Literacy Toolkit is part of Applied Humanity Foundation's commitment to making technology accessible and understandable for everyone, regardless of background or experience level.</p>
+          <p>We believe that digital literacy is a fundamental skill in the modern world. Access to clear, free, and interactive educational resources should not be limited by geography, income, or circumstance.</p>
+          <p>Every module is crafted by educators and reviewed by the community. All content is licensed under Creative Commons, ensuring it remains free for individuals, schools, libraries, and organizations everywhere.</p>
+        </p>
+      </div>
+      <div class="about-card">
+        <div class="logo-large">&#127760;</div>
+        <h3>Applied Humanity Foundation</h3>
+        <p>A 501(c)(3) nonprofit advancing human well-being through responsible AI, open-source tools, and digital literacy education.</p>
+        <a href="https://appliedhumanityfoundation.org" target="_blank" class="about-link">
+          Visit Foundation Website &#8594;
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p>Built with care by <a href="https://appliedhumanityfoundation.org" target="_blank">Applied Humanity Foundation</a></p>
+    <div class="footer-links">
+      <a href="https://appliedhumanityfoundation.org" target="_blank">Foundation</a>
+      <a href="https://github.com/applied-humanity-foundation/digital-literacy-toolkit" target="_blank">GitHub</a>
+      <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Module</h2>
+      <button class="modal-close" id="modalClose">&#10005;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ---- Module Data ----
+const modules = [
+  {
+    id: 'computer-basics',
+    icon: '&#128421;',
+    title: 'Computer Basics',
+    desc: 'File management, OS navigation, keyboard shortcuts, and everyday computer skills.',
+    level: 'beginner',
+    order: 1,
+    content: `
+      <h3>Understanding Your Computer</h3>
+      <p>A computer is a general-purpose machine that processes information by following instructions called programs. Whether you use a desktop, laptop, or tablet, every computer has the same fundamental components: a processor (CPU) that performs calculations, memory (RAM) for temporary storage while programs run, and permanent storage (hard drive or SSD) for saving your files. Understanding these basics helps you make informed decisions about managing your device.</p>
+      <p>Your operating system (Windows, macOS, or Linux) is the software that manages all of these components and provides the graphical interface you interact with daily. It handles running multiple programs at once, connecting to networks, and organizing your files into folders. Learning to navigate your OS efficiently is the foundation of all other digital skills.</p>
+      <h3>File Management Essentials</h3>
+      <p>Files are organized in a hierarchical structure of folders (also called directories). Think of it like a filing cabinet: the hard drive is the cabinet, folders are the drawers, and files are the documents inside. Developing a consistent naming convention and folder structure saves enormous time. For example, organizing by project or date (e.g., "2026-05-Report-Final.docx") makes files easy to find. Key operations include creating, renaming, copying, moving, and deleting files. Regularly backing up important files to an external drive or cloud service protects against data loss.</p>
+      <h3>Keyboard Shortcuts That Save Time</h3>
+      <p>Mastering keyboard shortcuts dramatically increases your efficiency. The most universal ones work across almost every application: Ctrl+C (copy), Ctrl+V (paste), Ctrl+Z (undo), Ctrl+S (save), and Ctrl+F (find). Alt+Tab switches between open windows, and Ctrl+A selects everything. On macOS, substitute Cmd for Ctrl. These shortcuts may seem small, but they collectively save hours of work over time and reduce strain from excessive mouse use.</p>
+    `,
+    quiz: [
+      { q: 'What component of a computer temporarily stores data while programs are running?', options: ['Hard Drive (HDD/SSD)', 'RAM (Random Access Memory)', 'CPU (Central Processing Unit)', 'Graphics Card (GPU)'], answer: 1 },
+      { q: 'Which keyboard shortcut is used to undo the last action in most applications?', options: ['Ctrl+Y', 'Ctrl+Z', 'Ctrl+X', 'Ctrl+U'], answer: 1 },
+      { q: 'What is the purpose of an operating system?', options: ['To browse the internet', 'To manage hardware and provide a user interface', 'To create documents', 'To store photos'], answer: 1 }
+    ]
+  },
+  {
+    id: 'internet-safety',
+    icon: '&#128737;&#65039;',
+    title: 'Internet Safety',
+    desc: 'Passwords, phishing awareness, privacy protection, and secure browsing habits.',
+    level: 'beginner',
+    order: 2,
+    content: `
+      <h3>Creating Strong Passwords</h3>
+      <p>A strong password is your first line of defense against unauthorized access to your accounts. Effective passwords are at least 12 characters long and combine uppercase letters, lowercase letters, numbers, and special characters. Avoid using personal information like birthdays, pet names, or common words. A useful technique is creating a passphrase: take a memorable sentence like "My cat jumped over 3 fences!" and it becomes a strong, rememberable password. Never reuse passwords across different services — if one account is compromised, all accounts sharing that password become vulnerable.</p>
+      <p>A password manager (such as Bitwarden or KeePass, both free and open-source) generates and stores unique, complex passwords for every account. You only need to remember one strong master password. Enable two-factor authentication (2FA) whenever available — this requires a second verification step, such as a code from an authenticator app, making it vastly harder for attackers to access your accounts even if they obtain your password.</p>
+      <h3>Recognizing Phishing Attacks</h3>
+      <p>Phishing is the most common form of cyber attack, where criminals impersonate trusted entities through emails, text messages, or fake websites to trick you into revealing sensitive information. Warning signs include: messages creating artificial urgency ("Your account will be closed in 24 hours!"), misspelled sender addresses (support@amaz0n.com), generic greetings ("Dear Customer"), and links that don't match the claimed organization when you hover over them. Legitimate organizations never ask for passwords or full credit card numbers via email.</p>
+      <h3>Protecting Your Privacy Online</h3>
+      <p>Every website you visit, search you make, and link you click can be tracked and used to build a profile about you. Protect your privacy by reviewing the privacy settings on social media accounts, using a browser with built-in tracking protection (such as Firefox), and being cautious about what personal information you share online. Consider using a VPN (Virtual Private Network) on public Wi-Fi networks to encrypt your internet traffic. Remember that once information is posted online, it can be extremely difficult to fully remove.</p>
+    `,
+    quiz: [
+      { q: 'Which of the following is the strongest password?', options: ['password123', 'MyDog2024', 'Tr0pic@l$unset!42Bloom', 'qwerty'], answer: 2 },
+      { q: 'What is a common sign of a phishing email?', options: ['It comes from a known contact', 'It contains a company logo', 'It creates artificial urgency and has a suspicious sender address', 'It is written in formal language'], answer: 2 },
+      { q: 'What does two-factor authentication (2FA) provide?', options: ['Faster login times', 'An extra layer of security beyond your password', 'Automatic password changes', 'Encrypted email'], answer: 1 }
+    ]
+  },
+  {
+    id: 'productivity-tools',
+    icon: '&#9889;',
+    title: 'Productivity Tools',
+    desc: 'Documents, spreadsheets, cloud collaboration, and digital workspace management.',
+    level: 'beginner',
+    order: 3,
+    content: `
+      <h3>Document Creation and Editing</h3>
+      <p>Word processors like Google Docs, Microsoft Word, and LibreOffice Writer are essential tools for creating professional documents. Key skills include formatting text with headings and styles for structure, inserting images and tables, and using spell-check and grammar tools. Styles and headings are particularly powerful: instead of manually changing font sizes, applying heading styles ensures consistent formatting throughout your document and enables automatic table of contents generation. Learning to use templates saves time on common document types like resumes, letters, and reports.</p>
+      <p>Beyond basic formatting, learn to use collaboration features such as comments, tracked changes (revision history), and sharing permissions. These features allow multiple people to work on the same document efficiently, making feedback cycles faster and reducing version confusion. Save documents in widely compatible formats like .docx or PDF to ensure others can open them regardless of their software.</p>
+      <h3>Spreadsheet Fundamentals</h3>
+      <p>Spreadsheets (Excel, Google Sheets, LibreOffice Calc) are powerful tools for organizing data, performing calculations, and creating visualizations. Each cell is identified by its column letter and row number (e.g., A1, B3). Formulas start with "=" and can perform operations like =SUM(A1:A10) to add values, =AVERAGE(B1:B20) for means, and =IF(C1>100, "High", "Low") for conditional logic. Learning to sort, filter, and create pivot tables transforms raw data into actionable insights. Even basic spreadsheet skills are valuable in virtually every profession.</p>
+      <h3>Cloud Storage and Collaboration</h3>
+      <p>Cloud storage services like Google Drive, OneDrive, and Dropbox let you store files online and access them from any device. Key benefits include automatic backup, easy file sharing with specific people or groups, and real-time collaboration where multiple people edit simultaneously. Organize cloud files the same way you would local files — with clear folder structures and consistent naming. Understand sharing permissions: "View" lets people only read the file, "Comment" lets them add feedback, and "Edit" gives full modification rights. Be mindful about sharing sensitive documents and always review who has access.</p>
+    `,
+    quiz: [
+      { q: 'What spreadsheet formula calculates the sum of cells A1 through A10?', options: ['=ADD(A1:A10)', '=SUM(A1:A10)', '=TOTAL(A1:A10)', '=COUNT(A1:A10)'], answer: 1 },
+      { q: 'Why are heading styles preferred over manual font size changes?', options: ['They make text larger', 'They add colors to text', 'They ensure consistent formatting and enable auto-generated tables of contents', 'They are required by spell-check'], answer: 2 },
+      { q: 'What does "View" permission mean when sharing a cloud document?', options: ['The person can edit the document', 'The person can only read the document', 'The person can delete the document', 'The person becomes the owner'], answer: 1 }
+    ]
+  },
+  {
+    id: 'ai-fundamentals',
+    icon: '&#129504;',
+    title: 'AI Fundamentals',
+    desc: 'What AI is, how Large Language Models work, and prompt engineering basics.',
+    level: 'intermediate',
+    order: 4,
+    content: `
+      <h3>What Is Artificial Intelligence?</h3>
+      <p>Artificial Intelligence (AI) refers to computer systems designed to perform tasks that typically require human intelligence. These tasks include understanding natural language, recognizing images, making decisions, and generating content. Modern AI is primarily powered by machine learning, where systems learn patterns from large amounts of data rather than following explicitly programmed rules. It is important to understand that current AI does not "think" or "understand" in the way humans do — it identifies statistical patterns in data and uses them to make predictions or generate outputs.</p>
+      <p>AI is already embedded in everyday tools: email spam filters, voice assistants (Siri, Alexa), recommendation systems (Netflix, Spotify), autocomplete in search engines, and navigation apps that predict traffic. Understanding AI basics helps you use these tools more effectively and think critically about their outputs and limitations.</p>
+      <h3>How Large Language Models Work</h3>
+      <p>Large Language Models (LLMs) like GPT and Claude are AI systems trained on vast amounts of text data to predict and generate human-like language. During training, the model processes billions of sentences and learns relationships between words, grammar patterns, factual associations, and reasoning structures. When you give an LLM a prompt, it generates a response by predicting the most likely next words based on patterns learned during training. LLMs do not access the internet in real-time (unless specifically designed to) and can sometimes generate confident-sounding but incorrect information, known as "hallucinations." Always verify important facts from authoritative sources.</p>
+      <h3>Introduction to Prompt Engineering</h3>
+      <p>Prompt engineering is the skill of writing effective instructions for AI systems to get the best possible output. Key principles include: be specific about what you want (instead of "Write about dogs," try "Write a 200-word informational paragraph about golden retrievers as family pets, including their temperament and exercise needs"); provide context and examples of the desired format; break complex tasks into smaller steps; and specify the desired tone, length, and audience. You can also assign the AI a role ("Act as an experienced teacher explaining this to a 10-year-old") to shape the style of the response. Like any skill, prompt engineering improves with practice and experimentation.</p>
+    `,
+    quiz: [
+      { q: 'How do Large Language Models generate text?', options: ['By searching the internet in real-time', 'By predicting the most likely next words based on training data patterns', 'By copying text from a database', 'By following hardcoded grammar rules'], answer: 1 },
+      { q: 'What is a "hallucination" in the context of AI?', options: ['The AI seeing images', 'The AI generating confident but incorrect information', 'A visual glitch in the interface', 'The AI dreaming during training'], answer: 1 },
+      { q: 'Which prompt is most likely to produce a useful response from an AI?', options: ['"Tell me stuff"', '"Write about history"', '"Explain the causes of World War I in 3 bullet points for a high school student"', '"Help"'], answer: 2 }
+    ]
+  },
+  {
+    id: 'data-literacy',
+    icon: '&#128202;',
+    title: 'Data Literacy',
+    desc: 'Reading charts, understanding basic statistics, and interpreting data visualizations.',
+    level: 'intermediate',
+    order: 5,
+    content: `
+      <h3>Reading Charts and Graphs</h3>
+      <p>Data visualizations are everywhere — in news articles, business reports, social media, and government publications. Being able to read them accurately is a critical modern skill. Start with the basics: always read the chart title, axis labels, and legend first. A bar chart compares quantities across categories, a line chart shows trends over time, a pie chart shows parts of a whole, and a scatter plot reveals relationships between two variables. Check the scale of the axes — a y-axis that starts at 95 instead of 0 can make small differences appear dramatically large, which is a common technique used to mislead readers.</p>
+      <p>When interpreting charts, ask critical questions: What time period does this cover? Is the sample size large enough to draw conclusions? Are the axes labeled clearly, or could they be misleading? Does correlation (two things happening together) necessarily mean causation (one thing causing the other)? A chart showing ice cream sales rising alongside crime rates does not mean ice cream causes crime — both increase in summer due to warmer weather.</p>
+      <h3>Basic Statistics Everyone Should Know</h3>
+      <p>Three measures of central tendency help summarize data: the mean (average, calculated by summing all values and dividing by count), the median (the middle value when data is sorted), and the mode (the most frequently occurring value). The median is often more useful than the mean for skewed data — for example, median household income gives a more representative picture than mean income, because a few extremely wealthy individuals can dramatically inflate the average. Understanding the difference between these measures helps you critically evaluate claims based on statistics in news and advertising.</p>
+      <h3>Spotting Misleading Data</h3>
+      <p>Misleading data presentations are common in media, advertising, and politics. Common tricks include: cherry-picking data ranges that support a narrative while ignoring the full picture; using 3D charts that distort proportions; showing raw numbers without accounting for population differences (comparing total cases between a country of 10 million and one of 300 million); and conflating correlation with causation. Develop the habit of checking the source of the data, looking for the methodology used to collect it, and considering what context might be missing from the presentation.</p>
+    `,
+    quiz: [
+      { q: 'If a chart\'s y-axis starts at 95 instead of 0, what effect does this have?', options: ['It makes the data more accurate', 'It makes small differences appear much larger than they are', 'It has no effect on perception', 'It reduces the file size of the chart'], answer: 1 },
+      { q: 'Why is median income often more representative than mean income?', options: ['Because it is easier to calculate', 'Because it excludes outliers that can skew the average', 'Because it always equals the mode', 'Because the government requires it'], answer: 1 },
+      { q: 'Ice cream sales and crime rates both increase in summer. This is an example of:', options: ['Causation', 'Correlation without causation', 'A randomized experiment', 'Median analysis'], answer: 1 }
+    ]
+  },
+  {
+    id: 'digital-communication',
+    icon: '&#128172;',
+    title: 'Digital Communication',
+    desc: 'Email etiquette, video call best practices, and effective online collaboration.',
+    level: 'beginner',
+    order: 6,
+    content: `
+      <h3>Professional Email Etiquette</h3>
+      <p>Email remains the primary communication channel in professional settings. A well-crafted email has a clear, specific subject line (not "Hello" or "Question" but "Meeting Reschedule: Q3 Review to Thursday 2pm"), an appropriate greeting, a concise body that gets to the point quickly, and a professional sign-off. Use "Reply All" sparingly — only when all recipients genuinely need to see your response. Be cautious with tone: without vocal cues, messages can easily be misinterpreted, so err on the side of politeness. Proofread before sending, especially for important communications.</p>
+      <p>Manage your inbox effectively by responding within 24 hours (even if just to acknowledge receipt), using folders or labels to organize messages, and unsubscribing from newsletters you no longer read. For complex discussions that keep going back and forth, consider switching to a phone call or video meeting — sometimes a 5-minute conversation replaces a 20-email thread. Avoid sending sensitive personal information (social security numbers, financial details) via email unless using encrypted communication.</p>
+      <h3>Video Call Best Practices</h3>
+      <p>Video calls have become essential for remote work and education. Before a call: test your audio and video, ensure adequate lighting on your face (natural light from a window in front of you works best, avoid backlighting), position your camera at eye level, and choose a clean, professional background. During the call: mute your microphone when not speaking to reduce background noise, look at the camera (not the screen) when talking to simulate eye contact, and use the chat function for links or questions without interrupting the speaker. Close unnecessary applications to ensure stable performance.</p>
+      <h3>Effective Online Collaboration</h3>
+      <p>Online collaboration tools like Slack, Microsoft Teams, and project management platforms (Trello, Asana) require their own communication norms. Keep messages organized by using appropriate channels or threads — don't post a question about marketing in the engineering channel. Write clear, self-contained messages rather than sending a series of one-word fragments. Use @mentions sparingly and purposefully to notify specific people. Respect time zones when messaging colleagues in different locations. Document decisions and action items from meetings in shared notes so everyone has a clear record, even those who couldn't attend.</p>
+    `,
+    quiz: [
+      { q: 'Which is the best email subject line for rescheduling a meeting?', options: ['"Hello"', '"Quick Question"', '"Meeting Reschedule: Q3 Review moved to Thursday 2pm"', '"URGENT!!!"'], answer: 2 },
+      { q: 'What should you do with your microphone during a video call when not speaking?', options: ['Leave it on so others know you are present', 'Mute it to reduce background noise', 'Turn it off completely and never unmute', 'Lower the volume halfway'], answer: 1 },
+      { q: 'Why should you use threads or channels in team messaging apps?', options: ['To use more storage space', 'To keep conversations organized and easy to follow', 'To send more messages', 'Because it is required by law'], answer: 1 }
+    ]
+  }
+];
+
+const features = [
+  { icon: '&#128218;', title: 'Interactive Lessons', desc: 'Each module contains rich educational content written by educators, not auto-generated filler. Real knowledge you can apply immediately.' },
+  { icon: '&#128200;', title: 'Track Progress', desc: 'Your learning progress is saved locally in your browser. Return any time and pick up exactly where you left off.' },
+  { icon: '&#127760;', title: 'Multilingual', desc: 'Available in English and Chinese, with more translations welcome from our global contributor community.' },
+  { icon: '&#128268;', title: 'Offline Ready', desc: 'Download the single HTML file and learn without any internet connection. Perfect for areas with limited connectivity.' },
+  { icon: '&#129309;', title: 'Community Driven', desc: 'Open-source and open to contributions. Educators, developers, and learners shape this toolkit together.' },
+  { icon: '&#127873;', title: 'Completely Free', desc: 'No subscriptions, no ads, no hidden costs. Licensed under CC BY 4.0 and MIT, free for everyone, forever.' }
+];
+
+// ---- State ----
+let progress = JSON.parse(localStorage.getItem('dlt-progress') || '{}');
+
+function saveProgress() { localStorage.setItem('dlt-progress', JSON.stringify(progress)); }
+function isCompleted(id) { return progress[id] && progress[id].completed; }
+function getQuizScore(id) { return progress[id] && progress[id].score !== undefined ? progress[id].score : -1; }
+function getCompletedCount() { return modules.filter(m => isCompleted(m.id)).length; }
+
+// ---- Render Module Cards ----
+function renderModules(filter, search) {
+  const grid = document.getElementById('modulesGrid');
+  grid.innerHTML = '';
+  let filtered = modules;
+  if (filter && filter !== 'all') filtered = filtered.filter(m => m.level === filter);
+  if (search) {
+    const s = search.toLowerCase();
+    filtered = filtered.filter(m => m.title.toLowerCase().includes(s) || m.desc.toLowerCase().includes(s));
+  }
+  filtered.forEach(m => {
+    const completed = isCompleted(m.id);
+    const score = getQuizScore(m.id);
+    const pct = completed ? 100 : (score >= 0 ? 50 : 0);
+    const card = document.createElement('div');
+    card.className = 'module-card reveal visible' + (completed ? ' completed' : '');
+    card.setAttribute('data-id', m.id);
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-icon">${m.icon}</div>
+        <span class="card-badge badge-${m.level}">${m.level}</span>
+      </div>
+      <h3 class="card-title">${m.title}</h3>
+      <p class="card-desc">${m.desc}</p>
+      <div class="card-progress">
+        <div class="card-progress-header">
+          <span class="card-progress-label">Progress</span>
+          <span class="card-progress-label">${pct}%</span>
+        </div>
+        <div class="card-progress-bar"><div class="card-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <button class="card-btn">${completed ? '&#10003; Completed — Review' : 'Start Module'}</button>
+    `;
+    card.addEventListener('click', () => openModal(m));
+    grid.appendChild(card);
+  });
+}
+
+// ---- Render Learning Path ----
+function renderPath() {
+  const container = document.getElementById('pathTimeline');
+  container.innerHTML = '<div class="path-line"></div>';
+  modules.sort((a,b) => a.order - b.order).forEach((m, i) => {
+    const done = isCompleted(m.id);
+    const step = document.createElement('div');
+    step.className = 'path-step';
+    step.innerHTML = `
+      <div class="path-dot ${done ? 'done' : ''}">${done ? '&#10003;' : m.icon}</div>
+      <div class="path-content">
+        <h4>${i+1}. ${m.title}</h4>
+        <p>${m.desc}</p>
+      </div>
+    `;
+    container.appendChild(step);
+  });
+}
+
+// ---- Render Features ----
+function renderFeatures() {
+  const grid = document.getElementById('featuresGrid');
+  features.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'feature-card reveal';
+    card.innerHTML = `
+      <div class="feature-icon">${f.icon}</div>
+      <h3>${f.title}</h3>
+      <p>${f.desc}</p>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ---- Update Overall Progress ----
+function updateProgress() {
+  const count = getCompletedCount();
+  document.getElementById('progressText').textContent = count + ' of 6 modules completed';
+  document.getElementById('overallProgress').style.width = Math.round(count / 6 * 100) + '%';
+}
+
+// ---- Modal ----
+function openModal(m) {
+  const overlay = document.getElementById('modalOverlay');
+  const body = document.getElementById('modalBody');
+  document.getElementById('modalTitle').textContent = m.title;
+  let quizHTML = '<div class="quiz-section"><h3>&#127919; Knowledge Check</h3>';
+  m.quiz.forEach((q, i) => {
+    quizHTML += `<div class="quiz-question" data-qi="${i}" data-answer="${q.answer}">
+      <p>${i+1}. ${q.q}</p>`;
+    q.options.forEach((opt, oi) => {
+      quizHTML += `<button class="quiz-option" data-oi="${oi}">${opt}</button>`;
+    });
+    quizHTML += '</div>';
+  });
+  quizHTML += `<div class="quiz-actions">
+    <button class="btn-primary" id="quizCheck" style="padding:12px 28px;font-size:0.9rem;">Check Answers</button>
+  </div><div id="quizResult"></div></div>`;
+  body.innerHTML = m.content + quizHTML;
+
+  // Quiz interactions
+  body.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const siblings = this.parentElement.querySelectorAll('.quiz-option');
+      siblings.forEach(s => s.classList.remove('selected','correct','wrong'));
+      this.classList.add('selected');
+    });
+  });
+
+  document.getElementById('quizCheck').addEventListener('click', () => {
+    let correct = 0;
+    body.querySelectorAll('.quiz-question').forEach(qEl => {
+      const answer = parseInt(qEl.dataset.answer);
+      const selected = qEl.querySelector('.quiz-option.selected');
+      qEl.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('correct','wrong'));
+      qEl.querySelectorAll('.quiz-option')[answer].classList.add('correct');
+      if (selected) {
+        const si = parseInt(selected.dataset.oi);
+        if (si === answer) { correct++; }
+        else { selected.classList.add('wrong'); }
+      }
+    });
+    const total = m.quiz.length;
+    const passed = correct >= 2;
+    const resultEl = document.getElementById('quizResult');
+    if (passed) {
+      resultEl.innerHTML = `<div class="quiz-result pass">&#10003; You scored ${correct}/${total} — Module complete!</div>`;
+      progress[m.id] = { completed: true, score: correct };
+    } else {
+      resultEl.innerHTML = `<div class="quiz-result fail">You scored ${correct}/${total}. Review the material and try again!</div>`;
+      progress[m.id] = { ...(progress[m.id] || {}), score: correct };
+    }
+    saveProgress();
+    updateProgress();
+    renderModules(activeFilter, document.getElementById('searchInput').value);
+    renderPath();
+  });
+
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ---- Filter & Search ----
+let activeFilter = 'all';
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    activeFilter = this.dataset.filter;
+    renderModules(activeFilter, document.getElementById('searchInput').value);
+  });
+});
+document.getElementById('searchInput').addEventListener('input', function() {
+  renderModules(activeFilter, this.value);
+});
+
+// ---- Mobile Nav ----
+document.getElementById('navToggle').addEventListener('click', () => {
+  document.getElementById('navLinks').classList.toggle('open');
+});
+document.querySelectorAll('.nav-links a').forEach(a => {
+  a.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open'));
+});
+
+// ---- Scroll Reveal ----
+function revealOnScroll() {
+  document.querySelectorAll('.reveal:not(.visible), .path-step:not(.visible)').forEach(el => {
+    const top = el.getBoundingClientRect().top;
+    if (top < window.innerHeight - 60) el.classList.add('visible');
+  });
+}
+window.addEventListener('scroll', revealOnScroll);
+
+// ---- Particle Canvas ----
+function initParticles() {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles;
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const count = Math.min(80, Math.floor(window.innerWidth / 18));
+  particles = Array.from({ length: count }, () => ({
+    x: Math.random() * w, y: Math.random() * h,
+    vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
+    r: Math.random() * 2 + 0.5, o: Math.random() * 0.3 + 0.1
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+      if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(37, 99, 235, ${p.o})`;
+      ctx.fill();
+    });
+    // Draw connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 150) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(37, 99, 235, ${0.04 * (1 - dist / 150)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ---- Init ----
+function init() {
+  renderModules('all', '');
+  renderPath();
+  renderFeatures();
+  updateProgress();
+  initParticles();
+  revealOnScroll();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
