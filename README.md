@@ -65,7 +65,7 @@ Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a p
 
 ## Educational Purpose
 
-This toolkit is developed and maintained as a public-interest educational resource by the Applied Humanity Foundation, a 501(c)(3) nonprofit organization. It is intended solely for educational purposes and is freely available to individuals, schools, libraries, and community organizations worldwide.
+This toolkit is developed and maintained as a public-interest educational resource by the Applied Humanity Foundation, a Colorado nonprofit corporation (501(c)(3) tax-exempt). It is intended solely for educational purposes and is freely available to individuals, schools, libraries, and community organizations worldwide.
 
 ## License
 
